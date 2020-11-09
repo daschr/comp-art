@@ -1,6 +1,6 @@
 #!/bin/bash
 
-(( $# != 1 )) && { echo "Usage: $0 [output]">&2; exit 1; } 
+(( $# != 2 )) && { echo "Usage: $0 [output] [duration]">&2; exit 1; } 
 
 winid="$(xdotool selectwindow)"
 
@@ -11,4 +11,8 @@ x=$((x- (x % 2)))
 y=$((y- (y % 2)))
 
 
-ffmpeg -video_size "${x}x${y}" -framerate 60 -f x11grab -i :0.0+"$position" -c:v libx264 -profile:v baseline -level 3.0 "$1" #-pix_fmt yuv420p "$1"
+ffmpeg -video_size "${x}x${y}" -framerate 60 -f x11grab -i :0.0+"0.0" -c:v libx264 -profile:v baseline  -pix_fmt yuv420p "$1" & #-level 1 -pix_fmt yuv444p "$1"
+
+pid="$!"
+sleep "$2"
+kill "$pid"
