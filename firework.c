@@ -43,7 +43,7 @@ int main(int ac, char *as[]) {
     srand((unsigned) time(NULL));
 
     Vector2 screendim= {width, height};
-    InitWindow(width, height, "SPACE");
+    InitWindow(width, height, "FIREWORK");
     HideCursor();
 
     SetTargetFPS(60);
