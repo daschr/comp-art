@@ -13,11 +13,24 @@ typedef struct {
 	Color color;
 } particle_t;
 
+typedef struct {
+	Vector2 pos;
+	Vector2 dir;
+	particle_t *particles;
+	size_t num_particles;
+	float sin_d, cos_d;
+	bool exploded;
+	float height;
+} rocket_t;
+
+void update_rockets(rocket_t *rockets, size_t num_rockets, Vector2 screendim);
 size_t update_particles(particle_t *particles, size_t num_particles, int8_t no_new, Vector2 pos, float sin_x, float cos_x);
+void free_rockets(rocket_t *rockets, size_t num_rockets);
+rocket_t *initialize_rockets(size_t num_rockets, size_t num_particles);
 
 int main(int ac, char *as[]) {
-    if(ac!=3) {
-        fprintf(stderr, "Usage: %s [size] [num particles]\n", as[0]);
+    if(ac!=4) {
+        fprintf(stderr, "Usage: %s [size] [num rockets] [num particles]\n", as[0]);
         return EXIT_FAILURE;
     }
 
@@ -27,20 +40,23 @@ int main(int ac, char *as[]) {
 			return EXIT_FAILURE;
 	}
 
-    size_t num_particles;
-    if(sscanf(as[2], "%lu", &num_particles) != 1) {
+    size_t num_rockets;
+    if(sscanf(as[2], "%lu", &num_rockets) != 1) {
         fprintf(stderr, "%s is not a positive number!\n", as[1]);
         return EXIT_FAILURE;
     }
 
-    particle_t *particles=malloc(sizeof(particle_t)*num_particles);
-    if(particles==NULL) {
-        fprintf(stderr, "could not allocate enough space for %lu particles!\n", num_particles);
+    size_t num_particles;
+    if(sscanf(as[3], "%lu", &num_particles) != 1) {
+        fprintf(stderr, "%s is not a positive number!\n", as[1]);
         return EXIT_FAILURE;
     }
 
-    memset(particles, 0, sizeof(particle_t)*num_particles);
-    srand((unsigned) time(NULL));
+	rocket_t *rockets;
+	if((rockets=initialize_rockets(num_rockets, num_particles))==NULL)
+			return EXIT_FAILURE;
+    
+	srand((unsigned) time(NULL));
 
     Vector2 screendim= {width, height};
     InitWindow(width, height, "FIREWORK");
@@ -50,43 +66,77 @@ int main(int ac, char *as[]) {
 
     Color black= {.r=0, .b=0, .g=0};
 
-	Vector2 rocket_pos={.x=screendim.x/2.0, .y=screendim.y};
-	float dir=PI/2.0;
-	float sin_d=0.0f, cos_d=0.0f;
-	int exploded=0;
-	float rocket_height=0.0f;
-	Vector2 speed={0.0f, 2.0f};
-
 	while(!WindowShouldClose()) {
         ClearBackground(black);
         screendim.x=GetScreenWidth();
         screendim.y=GetScreenHeight();
 
-        if(rocket_height==0.0f || !update_particles(particles, num_particles, exploded, rocket_pos, sin_d, cos_d)){
-				rocket_pos=(Vector2) {.x=GetRandomValue(0,screendim.x), .y=screendim.y+1};
-				dir=GetRandomValue(155, 205)/180.0*PI;
-				sin_d=sin(dir);
-				cos_d=cos(dir);
-				exploded=0;
-				rocket_height=(float) (screendim.y/10+GetRandomValue(0,2*screendim.y/3)); 
-				update_particles(particles, num_particles, exploded, rocket_pos, sin(dir), cos(dir));
-		}
-		
-		rocket_pos.x+=cos_d*speed.x - sin_d*speed.y;
-		rocket_pos.y+=sin_d*speed.x + cos_d*speed.y;
-		if(rocket_pos.y<=rocket_height)
-				exploded=1;
-
+		update_rockets(rockets, num_rockets, screendim);
         BeginDrawing();
-        for(size_t i=0; i<num_particles; ++i)
-           	DrawCircle(particles[i].pos.x, particles[i].pos.y, particles[i].rad, particles[i].color);
+		for(size_t s=0;s<num_rockets;++s){
+        	for(size_t i=0; i<rockets[s].num_particles; ++i)
+           		DrawCircle(		rockets[s].particles[i].pos.x, 
+								rockets[s].particles[i].pos.y, 
+								rockets[s].particles[i].rad, 
+								rockets[s].particles[i].color);
+		}
         DrawFPS(10.0, 10.0);
 		EndDrawing();
     }
-
-    free(particles);
+	
+	free_rockets(rockets, num_rockets);
     CloseWindow();
     return EXIT_SUCCESS;
+}
+
+void update_rockets(rocket_t *rockets, size_t num_rockets, Vector2 screendim){
+	for(size_t i=0;i<num_rockets;++i){
+		 if(rockets[i].height==0.0f || !update_particles(rockets[i].particles, rockets[i].num_particles, rockets[i].exploded, rockets[i].pos, rockets[i].sin_d, rockets[i].cos_d)){
+				rockets[i].pos=(Vector2) {.x=GetRandomValue(screendim.x/4, screendim.x/4*3), .y=screendim.y+1};
+				float dir=GetRandomValue(155, 205)/180.0*PI;
+				rockets[i].sin_d=sin(dir);
+				rockets[i].cos_d=cos(dir);
+				rockets[i].dir=(Vector2) {.x=-rockets[i].sin_d*2.0f, .y=rockets[i].cos_d*2.0f};
+				rockets[i].exploded=0;
+				rockets[i].height=(float) (screendim.y/10+GetRandomValue(0,2*screendim.y/3)); 
+				update_particles(rockets[i].particles, rockets[i].num_particles, rockets[i].exploded, rockets[i].pos, rockets[i].sin_d, rockets[i].cos_d);
+		}
+
+				
+		rockets[i].pos.x+=rockets[i].dir.x;
+		rockets[i].pos.y+=rockets[i].dir.y;
+		if(rockets[i].pos.y<=rockets[i].height)
+				rockets[i].exploded=1;
+	}
+}
+
+rocket_t *initialize_rockets(size_t num_rockets, size_t num_particles){
+	rocket_t *rockets=malloc(sizeof(rocket_t)*num_rockets);
+	if(rockets==NULL){
+			fprintf(stderr, "unable to allocate space for %lu rockets!\n", num_rockets);
+			return NULL;
+	}
+	memset(rockets, 0, sizeof(rocket_t)*num_rockets);
+	
+	for(size_t i=0; i<num_rockets;++i){
+		if((rockets[i].particles=malloc(sizeof(particle_t)*num_particles))==NULL)
+				goto fail;
+		rockets[i].num_particles=num_particles;
+		rockets[i].exploded=0;
+		rockets[i].height=0.0f;
+	}
+
+	return rockets;
+fail:
+	fprintf(stderr, "Unable to allocate space for all particles!\n");
+	free_rockets(rockets, num_rockets);
+	return NULL;	
+}
+
+void free_rockets(rocket_t *rockets, size_t num_rockets){
+	for(size_t i=0;i<num_rockets;++i)
+			free(rockets[i].particles);
+	free(rockets);
 }
 
 size_t update_particles(particle_t *particles, size_t num_particles, int8_t no_new, Vector2 pos, float sin_x, float cos_x) {
