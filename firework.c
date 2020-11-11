@@ -154,7 +154,7 @@ size_t update_particles(particle_t *particles, size_t num_particles, int8_t no_n
 			p->pos.x=pos.x;
             p->pos.y=pos.y;
             p->rad=GetRandomValue(1,2)/2.0f;
-			p->opstep=(int8_t) ((x<0?-x:x)/(0.05f+10.0/31.0f)*10.0f);
+			p->opstep=(int8_t) ((x<0?-x:x)/(0.05f+10.0/31.0f)*20.0f);
             p->color=(Color) {
                 .r=222.0f,
                 .g=(float) GetRandomValue(127,222),
