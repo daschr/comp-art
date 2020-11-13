@@ -74,8 +74,8 @@ void update_particles(particle_t *particles, size_t num_particles, Vector2 *scre
         if(p->pos.x<=0.0 || p->pos.y<=0.0 || p->pos.x > screendim->x || p->pos.y > screendim->y) {
             p->dir.x=(GetRandomValue(0,1)?-1:1)* (0.05f + GetRandomValue(0,111)/31.0f);
             p->dir.y=(GetRandomValue(0,1)?-1:1)* (0.05f + GetRandomValue(0,111)/31.0f);
-            p->pos.x=screendim->x/2.0+p->dir.x*(float) GetRandomValue(5,100);
-            p->pos.y=screendim->y/2.0+p->dir.y*(float) GetRandomValue(5,100);
+            p->pos.x=screendim->x/2.0+p->dir.x+(float) GetRandomValue(-5,5);
+            p->pos.y=screendim->y/2.0+p->dir.y+(float) GetRandomValue(-5,5);
             p->rad=GetRandomValue(20,60)/20.0f;
             p->color=(Color) {
                 .r=222.0f,
