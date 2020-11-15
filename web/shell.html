@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    
+    <title>SPACE</title>
+    
+    <meta name="title" content="SPACE">
+   
+    <style>
+      body { 
+        font-family: arial; 
+        margin: 0; 
+        padding: none;
+      }
+      
+      .emscripten { padding-right: 0; margin-left: auto; margin-right: auto; display: block; }
+      div.emscripten { text-align: center; }      
+      div.emscripten_border { border: 1px solid black; }
+      
+      /* NOTE: Canvas *must not* have any border or padding, or mouse coords will be wrong */
+      canvas.emscripten { 
+        border: 0px none; 
+        background: black; 
+        width: 100% 
+      }
+    </style>
+  </head>
+  <body>
+    <div class="emscripten_border">
+      <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" tabindex=-1></canvas>
+    </div>
+    
+
+        <script type='text/javascript'>
+        var statusElement = document.querySelector('#status');
+        var progressElement = document.querySelector('#progress');
+        var spinnerElement = document.querySelector('#spinner');
+        var Module = {
+            preRun: [],
+            postRun: [],
+			print: function() {},           
+			printErr: function() {},
+            canvas: (function() {
+                var canvas = document.querySelector('#canvas');
+
+                // As a default initial behavior, pop up an alert when webgl context is lost.
+                // To make your application robust, you may want to override this behavior before shipping!
+                // See http://www.khronos.org/registry/webgl/specs/latest/1.0/#5.15.2
+                canvas.addEventListener("webglcontextlost", function(e) { alert('WebGL context lost. You will need to reload the page.'); e.preventDefault(); }, false);
+
+                return canvas;
+            })(),
+			setStatus: function(){},
+            totalDependencies: 0,
+			monitorRunDependencies: function() {}
+            //noInitialRun: true
+        };
+        
+        
+        window.onerror = function() {
+            alert('Exception thrown, see JavaScript console');
+        };
+    </script>
+    
+    
+    {{{ SCRIPT }}}
+  </body>
+</html>
