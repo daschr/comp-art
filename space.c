@@ -4,8 +4,13 @@
 #include <time.h>
 #include <string.h>
 
+#ifndef NUM_STARS
 #define NUM_STARS 10
+#endif
+
+#ifndef BIGGEST_STAR_RAD
 #define BIGGEST_STAR_RAD 3
+#endif
 
 typedef struct {
     Vector2 pos;
