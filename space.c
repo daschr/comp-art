@@ -4,14 +4,19 @@
 #include <time.h>
 #include <string.h>
 
+#define NUM_STARS 10
+#define BIGGEST_STAR_RAD 3
+
 typedef struct {
     Vector2 pos;
     Vector2 dir;
-    float rad;
+    int star;
     Color color;
 } particle_t;
 
 
+void initialize_stars(RenderTexture2D *stars, size_t num_stars);
+void initialize_particles(particle_t *particles, size_t num_particles, Vector2 *screendim);
 void update_particles(particle_t *particles, size_t num_particles, Vector2 *screendim);
 
 int main(int ac, char *as[]) {
@@ -20,11 +25,11 @@ int main(int ac, char *as[]) {
         return EXIT_FAILURE;
     }
 
-	int width, height;
-	if(sscanf(as[1], "%dx%d", &width, &height)!=2){
-			fprintf(stderr, "size %s is invalid!\n", as[1]);
-			return EXIT_FAILURE;
-	}
+    int width, height;
+    if(sscanf(as[1], "%dx%d", &width, &height)!=2) {
+        fprintf(stderr, "size %s is invalid!\n", as[1]);
+        return EXIT_FAILURE;
+    }
 
     size_t num_particles;
     if(sscanf(as[2], "%lu", &num_particles) != 1) {
@@ -38,7 +43,14 @@ int main(int ac, char *as[]) {
         return EXIT_FAILURE;
     }
 
-    memset(particles, 0, sizeof(particle_t)*num_particles);
+	RenderTexture2D *stars=malloc(sizeof(RenderTexture2D)*NUM_STARS);
+	if(stars==NULL){
+			fprintf(stderr, "could not allocate space for textures!");
+			free(particles);
+			return EXIT_FAILURE;
+	}
+	
+	memset(particles, 0, sizeof(particle_t)*num_particles);
     srand((unsigned) time(NULL));
 
     Vector2 screendim= {width, height};
@@ -47,45 +59,69 @@ int main(int ac, char *as[]) {
 
     SetTargetFPS(60);
 
-    Color black= {.r=0, .b=0, .g=0};
-
-    while(!WindowShouldClose()) {
-        ClearBackground(black);
+	initialize_stars(stars, NUM_STARS);
+    initialize_particles(particles, num_particles, &screendim);
+    
+	while(!WindowShouldClose()) {
+        ClearBackground(BLACK);
         screendim.x=GetScreenWidth();
         screendim.y=GetScreenHeight();
 
         update_particles(particles, num_particles, &screendim);
-        BeginDrawing();
-        for(size_t i=0; i<num_particles; ++i)
-            DrawCircle(particles[i].pos.x, particles[i].pos.y, particles[i].rad, particles[i].color);
-        //DrawFPS(10.0, 10.0);
+
+		BeginDrawing();
+		for(size_t i=0;i<num_particles;++i)
+			DrawTexture(stars[particles[i].star].texture, 
+							particles[i].pos.x, particles[i].pos.y, particles[i].color);
 		EndDrawing();
     }
 
+	free(stars);
     free(particles);
     CloseWindow();
     return EXIT_SUCCESS;
 }
 
-void update_particles(particle_t *particles, size_t num_particles, Vector2 *screendim) {
-    for(size_t i=0; i<num_particles; ++i) {
-        particle_t *p=particles+i;
+void initialize_stars(RenderTexture2D *stars, size_t num_stars){
+	float rad=(float) BIGGEST_STAR_RAD;
+	for(size_t i=0;i<num_stars;++i){
+		stars[i]=LoadRenderTexture(BIGGEST_STAR_RAD*2+1, BIGGEST_STAR_RAD*2+1);
+		BeginTextureMode(stars[i]);
+		DrawCircle(BIGGEST_STAR_RAD+1, BIGGEST_STAR_RAD+1, rad, (Color) { 200.0f, 200.0f, 200.0f, 255.0f });
+		EndTextureMode();
+		rad-=(float) (BIGGEST_STAR_RAD-1)/ (float) num_stars;
+	}
+}
 
-        if(p->pos.x<=0.0 || p->pos.y<=0.0 || p->pos.x > screendim->x || p->pos.y > screendim->y) {
-            p->dir.x=(GetRandomValue(0,1)?-1:1)* (0.05f + GetRandomValue(0,111)/31.0f);
-            p->dir.y=(GetRandomValue(0,1)?-1:1)* (0.05f + GetRandomValue(0,111)/31.0f);
-            p->pos.x=screendim->x/2.0+p->dir.x+(float) GetRandomValue(-5,5);
-            p->pos.y=screendim->y/2.0+p->dir.y+(float) GetRandomValue(-5,5);
-            p->rad=GetRandomValue(20,60)/20.0f;
-            p->color=(Color) {
-                .r=222.0f,
-                .g=(float) GetRandomValue(127,222),
-                .b=(float) GetRandomValue(67,167),
-                .a=255.0f
-            };
-        } else {
-            p->pos.x+=p->dir.x;
-            p->pos.y+=p->dir.y;
+void initialize_particles(particle_t *particles, size_t num_particles, Vector2 *screendim) {
+    particle_t *p;
+    for(size_t i=0; i<num_particles; ++i) {
+        p=particles+i;
+
+        p->dir.x=(GetRandomValue(0,1)?-1:1)* (0.05f + GetRandomValue(0,111)/31.0f);
+        p->dir.y=(GetRandomValue(0,1)?-1:1)* (0.05f + GetRandomValue(0,111)/31.0f);
+        p->pos.x=screendim->x/2.0+p->dir.x*(float) GetRandomValue(-5,5);
+        p->pos.y=screendim->y/2.0+p->dir.y*(float) GetRandomValue(-5,5);
+        p->star=GetRandomValue(0,NUM_STARS);
+        float c=(float)GetRandomValue(200,255);
+        p->color=(Color) {
+            .r=c, .g=c, .b=c, .a=255.0f
+        };
+    }
+}
+
+void update_particles(particle_t *particles, size_t num_particles, Vector2 *screendim) {
+    particle_t *p;
+    for(size_t i=0; i<num_particles; ++i) {
+        p=particles+i;
+        if(	p->pos.x < 0 || p->pos.y < 0
+                || p->pos.x > screendim->x || p->pos.y > screendim->y) {
+
+            p->pos.x=screendim->x/2.0+p->dir.x*2.0;
+            p->pos.y=screendim->y/2.0+p->dir.y*2.0;
         }
+
+        p->pos.x+=p->dir.x;
+        p->pos.y+=p->dir.y;
     }
 }
