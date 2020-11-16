@@ -53,7 +53,9 @@ int main(int ac, char *as[]) {
     srand((unsigned) time(NULL));
 
     //screendim= (Vector2) {GetScreenWidth(), GetScreenHeight()};
-    screendim= (Vector2) {1920.0f, 1080.0f};
+	int w,h;
+	emscripten_get_screen_size(&w, &h);
+	screendim= (Vector2) {(float) w, (float) h};
 	
 	InitWindow(screendim.x, screendim.y, "SPACE");
     HideCursor();
@@ -71,10 +73,14 @@ int main(int ac, char *as[]) {
 
 void update_frame(void){
 		ClearBackground(BLACK);
-        //screendim.x=GetScreenWidth();
-        //screendim.y=GetScreenHeight();
-
-        update_particles(particles, num_particles, &screendim);
+	
+		int w,h;
+		emscripten_get_screen_size(&w, &h);
+       	screendim.x=(float) w;
+		screendim.y=(float) h;
+		
+		SetWindowSize(w,h);
+		update_particles(particles, num_particles, &screendim);
 
 		BeginDrawing();
 		for(size_t i=0;i<num_particles;++i)
