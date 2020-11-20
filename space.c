@@ -105,8 +105,8 @@ void initialize_particles(particle_t *particles, size_t num_particles, Vector2 *
 
         p->dir.x=(GetRandomValue(0,1)?-1:1)* (0.05f + GetRandomValue(0,111)/31.0f);
         p->dir.y=(GetRandomValue(0,1)?-1:1)* (0.05f + GetRandomValue(0,111)/31.0f);
-        p->pos.x=screendim->x/2.0+p->dir.x*(float) GetRandomValue(-5,5);
-        p->pos.y=screendim->y/2.0+p->dir.y*(float) GetRandomValue(-5,5);
+        p->pos.x=screendim->x/2.0+p->dir.x*2.0f;
+        p->pos.y=screendim->y/2.0+p->dir.y*2.0f;
         p->star=GetRandomValue(0,NUM_STARS);
         float c=(float)GetRandomValue(200,255);
         p->color=(Color) {
@@ -122,8 +122,8 @@ void update_particles(particle_t *particles, size_t num_particles, Vector2 *scre
         if(	p->pos.x < 0 || p->pos.y < 0
                 || p->pos.x > screendim->x || p->pos.y > screendim->y) {
 
-            p->pos.x=screendim->x/2.0+p->dir.x*2.0;
-            p->pos.y=screendim->y/2.0+p->dir.y*2.0;
+            p->pos.x=screendim->x/2.0+p->dir.x*2.0f;
+            p->pos.y=screendim->y/2.0+p->dir.y*2.0f;
         }
 
         p->pos.x+=p->dir.x;
