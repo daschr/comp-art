@@ -1,0 +1,40 @@
+<html>
+		<head>
+				<script src="space.js"></script>
+<style>
+	#animation {
+			position: absolute;
+	}
+  #playground { 
+		  background-color: black;
+  }
+</style>
+		</head>
+
+		<body>
+				<script> 
+						function play(){
+							if(typeof play.initial == 'undefined'){
+							Module.ccall("animate_2dspace", null, ["string", "number", "number", "number"], 
+										["playground", 1024, 1024, 100]);
+									play.initial=true;
+							}else{
+									Module.resumeMainLoop();
+							}
+						}
+
+						function pause(){
+							Module.pauseMainLoop();
+						}
+				</script>
+				
+				<div id=animation">
+				<canvas id="playground", width="1024", height="1024">No canvas supported :(</canvas>
+
+				<center>
+						<button onclick="play();">Play</button>
+						<button onclick="pause();">Pause</button>
+				<center>
+				</div>
+		</body>
+</html>
