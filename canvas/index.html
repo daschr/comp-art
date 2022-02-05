@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="/space.js"></script>
+        <style>
+            #playground {
+                display: block;
+				position: fixed;
+                bottom: 0;
+                right: 0;
+                background-color: black;
+                z-index: -1;
+            }
+        </style>
+    </head>
+
+    <body>
+        <canvas id="playground">No canvas supported :(</canvas>
+        <script>
+			var mod;
+			var space;
+
+			function animation_step(timestamp){
+				mod._update_2dspace(space, timestamp);
+				window.requestAnimationFrame(animation_step);
+			}
+
+			document.addEventListener("DOMContentLoaded", function () {
+			Module().then(function(m){ 
+					let c = document.getElementById("playground");
+            		c.width = window.innerWidth;
+            		c.height = window.innerHeight;
+									
+					mod=m; 
+					space=mod.ccall("initialize_2dspace", "number", ["string", "number", "number", "number"], ["playground", window.innerWidth, window.innerHeight, 200]);
+					window.requestAnimationFrame(animation_step);
+				});
+			});
+
+		</script>
+    </body>
+</html>
