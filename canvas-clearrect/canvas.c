@@ -20,6 +20,7 @@ typedef struct {
     double old_ts;
     int width;
     int height;
+    int starting_boundary;
     int num_stars;
 
     char *canvas_id;
@@ -38,14 +39,15 @@ EMSCRIPTEN_KEEPALIVE space_t *initialize_2dspace(char *canvas_id, int width, int
     s->old_ts=0;
     s->width=width;
     s->height=height;
+    s->starting_boundary=width<height?width:height;
     s->num_stars=num_stars;
     s->stars=malloc(sizeof(star_t)*s->num_stars);
 
     float starting_time;
     for(int i=0; i<s->num_stars; ++i) {
-        s->stars[i].dir[0]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f)); //px/ms
-        s->stars[i].dir[1]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f)); //px/ms
-        starting_time=(float) (rand()&2047);
+        s->stars[i].dir[0]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f));
+        s->stars[i].dir[1]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f));
+        starting_time=(float) ((rand()&2047)/2048.0f)*s->starting_boundary;
         s->stars[i].pos[0]=(float) (width/2.f) + starting_time*s->stars[i].dir[0];
         s->stars[i].pos[1]=(float) (height/2.f) + starting_time*s->stars[i].dir[1];
         s->stars[i].color=color;
@@ -72,9 +74,9 @@ EMSCRIPTEN_KEEPALIVE void update_2dspace(space_t *s, double ts) {
         if(s->stars[i].pos[0]>=(float)s->width | s->stars[i].pos[0]<0.f |
                 s->stars[i].pos[1]>=(float)s->height|s->stars[i].pos[1]<0.f) {
 
-            s->stars[i].dir[0]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f)); //px/ms
-            s->stars[i].dir[1]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f)); //px/ms
-            starting_time=(float) (rand()&2047);
+            s->stars[i].dir[0]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f));
+            s->stars[i].dir[1]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f));
+            starting_time=(float) ((rand()&2047)/2048.0f)*s->starting_boundary;
             s->stars[i].pos[0]=(float) (s->width/2.f) + starting_time*s->stars[i].dir[0];
             s->stars[i].pos[1]=(float) (s->height/2.f) + starting_time*s->stars[i].dir[1];
             s->stars[i].radius=(rand()&3)+1;
