@@ -1,7 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
+		<title>DSXM</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta charset="UTF-8">
 		<script src="/space.js"></script>
         <style>
             #playground {
@@ -29,15 +31,23 @@
 			document.addEventListener("DOMContentLoaded", function () {
 			Module().then(function(m){ 
 					let c = document.getElementById("playground");
-            		c.width = window.innerWidth;
+					let ctx=c.getContext('2d');
+            		
+					ctx.scale(window.devicePixelRatio, window.devicePixelRatio);									
+					c.width = window.innerWidth;
             		c.height = window.innerHeight;
-									
+
 					mod=m; 
-					space=mod.ccall("initialize_2dspace", "number", ["string", "number", "number", "number"], ["playground", window.innerWidth, window.innerHeight, 200]);
+					space=mod.ccall("initialize_2dspace", "number", ["string", "number"], ["playground", 200]);
 					window.requestAnimationFrame(animation_step);
 				});
 			});
 
+			window.onresize=function(e){
+					let c = document.getElementById("playground");
+            		c.width = window.innerWidth;
+            		c.height = window.innerHeight;
+			};
 		</script>
     </body>
 </html>

@@ -9,8 +9,8 @@
 #define SPACE_BACKGROUND_COLOR 0xff000000
 
 typedef struct {
-    float pos[2];
-    float dir[2];
+    double pos[2];
+    double dir[2];
     const char *color;
     uint8_t radius;
     uint8_t size;
@@ -18,9 +18,6 @@ typedef struct {
 
 typedef struct {
     double old_ts;
-    int width;
-    int height;
-    int starting_boundary;
     int num_stars;
 
     char *canvas_id;
@@ -30,26 +27,22 @@ typedef struct {
 inline void canvas_clearrect(const char *c_id, int width, int height);
 inline void canvas_draw_filled_circle(const char *c_id, int32_t x, int32_t y, int32_t r, const char *color);
 
-EMSCRIPTEN_KEEPALIVE space_t *initialize_2dspace(char *canvas_id, int width, int height, int num_stars) {
+EMSCRIPTEN_KEEPALIVE space_t *initialize_2dspace(char *canvas_id, int num_stars) {
     srand(time(NULL));
 
     const char *color=strdup("white");
     space_t *s=malloc(sizeof(space_t));
     s->canvas_id=strdup(canvas_id);
     s->old_ts=0;
-    s->width=width;
-    s->height=height;
-    s->starting_boundary=width<height?width:height;
     s->num_stars=num_stars;
     s->stars=malloc(sizeof(star_t)*s->num_stars);
 
-    float starting_time;
     for(int i=0; i<s->num_stars; ++i) {
-        s->stars[i].dir[0]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f));
-        s->stars[i].dir[1]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f));
-        starting_time=(float) ((rand()&2047)/2048.0f)*s->starting_boundary;
-        s->stars[i].pos[0]=(float) (width/2.f) + starting_time*s->stars[i].dir[0];
-        s->stars[i].pos[1]=(float) (height/2.f) + starting_time*s->stars[i].dir[1];
+        s->stars[i].dir[0]=(rand()&1?-1.:1.)*(0.00001+(((double) (rand()&8191))/8192.0)/2000.0);
+        s->stars[i].dir[1]=(rand()&1?-1.:1.)*(0.00001+(((double) (rand()&8191))/8192.0)/2000.0);
+        const double starting_time=(double) (rand()&((1<<8)-1));
+        s->stars[i].pos[0]=starting_time*s->stars[i].dir[0];
+        s->stars[i].pos[1]=starting_time*s->stars[i].dir[1];
         s->stars[i].color=color;
         s->stars[i].radius=(rand()&3)+1;
     }
@@ -58,29 +51,29 @@ EMSCRIPTEN_KEEPALIVE space_t *initialize_2dspace(char *canvas_id, int width, int
 }
 
 EMSCRIPTEN_KEEPALIVE void update_2dspace(space_t *s, double ts) {
-    float starting_time;
-
-    float delta_ts=!s->old_ts?1.0f:((float) (ts-s->old_ts)/4.f);
+    double delta_ts=!s->old_ts?1.0:(ts-s->old_ts);
     s->old_ts=ts;
 
-    canvas_clearrect(s->canvas_id, s->width, s->height);
+    const int32_t height=EM_ASM_INT({return document.getElementById(UTF8ToString($0)).height}, s->canvas_id),
+                  width=EM_ASM_INT({return document.getElementById(UTF8ToString($0)).width}, s->canvas_id);
+    const int32_t height_h=height>>1, width_h=width>>1;
+
+    canvas_clearrect(s->canvas_id, width, height);
 
     for(int i=0; i<s->num_stars; ++i) {
-        canvas_draw_filled_circle(s->canvas_id, (int32_t) s->stars[i].pos[0], (int32_t) s->stars[i].pos[1], s->stars[i].radius, s->stars[i].color);
+        canvas_draw_filled_circle(s->canvas_id, (int32_t) (width_h+s->stars[i].pos[0]*width_h), (int32_t) (height_h+s->stars[i].pos[1]*height_h), s->stars[i].radius, s->stars[i].color);
         s->stars[i].pos[0]+=delta_ts*s->stars[i].dir[0];
         s->stars[i].pos[1]+=delta_ts*s->stars[i].dir[1];
 
+        if((s->stars[i].pos[0]>1.0)|(s->stars[i].pos[0]<-1.0)|
+                (s->stars[i].pos[1]>1.0)|(s->stars[i].pos[1]<-1.0)) {
 
-        if(s->stars[i].pos[0]>=(float)s->width | s->stars[i].pos[0]<0.f |
-                s->stars[i].pos[1]>=(float)s->height|s->stars[i].pos[1]<0.f) {
-
-            s->stars[i].dir[0]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f));
-            s->stars[i].dir[1]=(rand()&1?-1:1)*(0.01f+(((float) (rand()&4095))/4096.0f));
-            starting_time=(float) ((rand()&2047)/2048.0f)*s->starting_boundary;
-            s->stars[i].pos[0]=(float) (s->width/2.f) + starting_time*s->stars[i].dir[0];
-            s->stars[i].pos[1]=(float) (s->height/2.f) + starting_time*s->stars[i].dir[1];
+            s->stars[i].dir[0]=(rand()&1?-1.:1.)*(0.00001+(((double) (rand()&8191))/8192.0)/2000.0);
+            s->stars[i].dir[1]=(rand()&1?-1.:1.)*(0.00001+(((double) (rand()&8191))/8192.0)/2000.0);
+            const double starting_time=(double) (rand()&((1<<8)-1));
+            s->stars[i].pos[0]=starting_time*s->stars[i].dir[0];
+            s->stars[i].pos[1]=starting_time*s->stars[i].dir[1];
             s->stars[i].radius=(rand()&3)+1;
-//            s->stars[i].color=color;
         }
     }
 }
